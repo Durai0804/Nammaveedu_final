@@ -1,0 +1,168 @@
+// Prisma schema for NammaVeedu
+// Database: PostgreSQL
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+  RESIDENT
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum NoticeStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+model User {
+  id         String      @id @default(cuid())
+  email      String      @unique
+  password   String
+  name       String
+  role       Role        @default(RESIDENT)
+  flatNumber String?
+  complaints Complaint[]
+  comments   Comment[]
+  createdAt  DateTime    @default(now())
+
+  notifications Notification[]
+
+  preApprovals PreApproval[]
+  resident     Resident?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  title     String
+  message   String
+  type      String   // complaint_update | complaint_comment
+  read      Boolean  @default(false)
+
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Complaint {
+  id          String          @id @default(cuid())
+  flatNumber  String
+  flatId      String?
+  description String
+  assignedTo  String?
+  status      ComplaintStatus @default(OPEN)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  comments Comment[]
+  notifications Notification[]
+  flat     Flat?   @relation("FlatComplaints", fields: [flatId], references: [id])
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model Notice {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  status      NoticeStatus
+  date        DateTime
+  time        String?
+  location    String?
+  createdAt   DateTime     @default(now())
+}
+
+model PreApproval {
+  id           String  @id @default(cuid())
+  flatNumber   String
+  name         String
+  purpose      String
+  expectedTime String?
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+/// New models for Flats, Residents, Maintenance, and Visitors
+
+model Flat {
+  id          String        @id @default(cuid())
+  flatNumber  String        @unique
+  block       String
+  floor       String
+  sqft        Int?
+  ownerName   String?
+  residents   Resident[]
+  maintenance Maintenance[]
+  visitors    Visitor[]
+  complaints  Complaint[]   @relation("FlatComplaints")
+}
+
+model Resident {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id])
+  flatId    String
+  flat      Flat    @relation(fields: [flatId], references: [id])
+  phone     String?
+  members   Int?    // family member count
+  createdAt DateTime @default(now())
+}
+
+model Maintenance {
+  id         String   @id @default(cuid())
+  flatId     String
+  flat       Flat     @relation(fields: [flatId], references: [id])
+  month      String
+  amount     Int
+  status     String   // paid | pending
+  paidAt     DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Visitor {
+  id         String   @id @default(cuid())
+  flatId     String
+  flat       Flat     @relation(fields: [flatId], references: [id])
+  name       String
+  phone      String?
+  purpose    String
+  memberCount Int?
+  date       DateTime
+  inTime     String
+  outTime    String?
+  status     String   // in | out
+  createdAt  DateTime @default(now())
+}
+
