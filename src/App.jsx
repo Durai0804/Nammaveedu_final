@@ -1,72 +1,112 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { LanguageProvider } from './context/LanguageContext';
 
-// Pages
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import AdminDashboard from './pages/admin/Dashboard';
-import ResidentDashboard from './pages/resident/Dashboard';
-import Flats from './pages/admin/Flats';
-import Maintenance from './pages/admin/Maintenance';
-import Complaints from './pages/admin/Complaints';
-import Notices from './pages/admin/Notices';
-import Visitors from './pages/admin/Visitors';
-import Reports from './pages/admin/Reports';
-import Settings from './pages/admin/Settings';
-import SuperAdmin from './pages/admin/SuperAdmin';
-import CreateResident from './pages/admin/CreateResident';
-import RaiseComplaint from './pages/resident/RaiseComplaint';
-import MyComplaints from './pages/resident/MyComplaints';
-import ComplaintDetail from './pages/resident/ComplaintDetail';
-import ResidentVisitors from './pages/resident/Visitors';
-import ResidentNotices from './pages/resident/Notices';
-import ResidentSettings from './pages/resident/Settings';
+// Pages - Public
+import Landing from './pages-v2/Landing';
+import Login from './pages-v2/Login';
 
-function App() {
-  // Redirect /dashboard to role-specific dashboard
-  const RoleDashboardRedirect = () => {
-    const role = localStorage.getItem('userRole') || 'admin';
+// Pages - Admin
+import AdminDashboard from './pages-v2/admin/Dashboard';
+import Flats from './pages-v2/admin/Flats';
+import Maintenance from './pages-v2/admin/Maintenance';
+import Complaints from './pages-v2/admin/Complaints';
+import Notices from './pages-v2/admin/Notices';
+import Visitors from './pages-v2/admin/Visitors';
+import Reports from './pages-v2/admin/Reports';
+import Settings from './pages-v2/admin/Settings';
+import SuperAdmin from './pages-v2/admin/SuperAdmin';
+import CreateResident from './pages-v2/admin/CreateResident';
+
+// Pages - Resident
+import ResidentDashboard from './pages-v2/resident/Dashboard';
+import RaiseComplaint from './pages-v2/resident/RaiseComplaint';
+import MyComplaints from './pages-v2/resident/MyComplaints';
+import ComplaintDetail from './pages-v2/resident/ComplaintDetail';
+import ResidentVisitors from './pages-v2/resident/Visitors';
+import ResidentNotices from './pages-v2/resident/Notices';
+import ResidentSettings from './pages-v2/resident/Settings';
+
+// Page transition wrapper - Smooth crossfade
+const PageTransition = ({ children }) => (
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
+    >
+        {children}
+    </motion.div>
+);
+
+// Animated Routes Component
+const AnimatedRoutes = () => {
+    const location = useLocation();
+
+    // Redirect /dashboard to role-specific dashboard
+    const RoleDashboardRedirect = () => {
+        const role = localStorage.getItem('userRole') || 'admin';
+        return (
+            <Navigate to={role === 'resident' ? '/resident/dashboard' : '/admin/dashboard'} replace />
+        );
+    };
+
     return (
-      <Navigate to={role === 'resident' ? '/resident/dashboard' : '/admin/dashboard'} replace />
+        <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+                {/* Public Routes */}
+                <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+
+                {/* Dashboard Routes */}
+                <Route path="/dashboard" element={<RoleDashboardRedirect />} />
+                <Route path="/admin/dashboard" element={<PageTransition><AdminDashboard /></PageTransition>} />
+                <Route path="/resident/dashboard" element={<PageTransition><ResidentDashboard /></PageTransition>} />
+
+                {/* Resident Routes */}
+                <Route path="/resident/complaints/new" element={<PageTransition><RaiseComplaint /></PageTransition>} />
+                <Route path="/resident/complaints" element={<PageTransition><MyComplaints /></PageTransition>} />
+                <Route path="/resident/complaints/:id" element={<PageTransition><ComplaintDetail /></PageTransition>} />
+                <Route path="/resident/visitors" element={<PageTransition><ResidentVisitors /></PageTransition>} />
+                <Route path="/resident/notices" element={<PageTransition><ResidentNotices /></PageTransition>} />
+                <Route path="/resident/settings" element={<PageTransition><ResidentSettings /></PageTransition>} />
+
+                {/* Admin Routes */}
+                <Route path="/flats" element={<PageTransition><Flats /></PageTransition>} />
+                <Route path="/maintenance" element={<PageTransition><Maintenance /></PageTransition>} />
+                <Route path="/administration" element={<PageTransition><Maintenance /></PageTransition>} />
+                <Route path="/complaints" element={<PageTransition><Complaints /></PageTransition>} />
+                <Route path="/notices" element={<PageTransition><Notices /></PageTransition>} />
+                <Route path="/visitors" element={<PageTransition><Visitors /></PageTransition>} />
+                <Route path="/admin/residents/create" element={<PageTransition><CreateResident /></PageTransition>} />
+                <Route path="/reports" element={<PageTransition><Reports /></PageTransition>} />
+                <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+
+                {/* Super Admin Route */}
+                <Route path="/super-admin" element={<PageTransition><SuperAdmin /></PageTransition>} />
+
+                {/* Redirect unknown routes to landing */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </AnimatePresence>
     );
-  };
-  return (
-    <LanguageProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+};
 
-          {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<RoleDashboardRedirect />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/resident/dashboard" element={<ResidentDashboard />} />
-          <Route path="/resident/complaints/new" element={<RaiseComplaint />} />
-          <Route path="/resident/complaints" element={<MyComplaints />} />
-          <Route path="/resident/complaints/:id" element={<ComplaintDetail />} />
-          <Route path="/resident/visitors" element={<ResidentVisitors />} />
-          <Route path="/resident/notices" element={<ResidentNotices />} />
-          <Route path="/resident/settings" element={<ResidentSettings />} />
-          <Route path="/flats" element={<Flats />} />
-          <Route path="/maintenance" element={<Maintenance />} />
-          <Route path="/complaints" element={<Complaints />} />
-          <Route path="/notices" element={<Notices />} />
-          <Route path="/visitors" element={<Visitors />} />
-          <Route path="/admin/residents/create" element={<CreateResident />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-
-          {/* Super Admin Route */}
-          <Route path="/super-admin" element={<SuperAdmin />} />
-
-          {/* Redirect unknown routes to landing */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </LanguageProvider>
-  );
+/**
+ * NammaVeedu - Apartment Management System
+ * 
+ * Main routing configuration with smooth page transitions.
+ * Backend APIs remain locked and unchanged.
+ */
+function App() {
+    return (
+        <LanguageProvider>
+            <Router>
+                <AnimatedRoutes />
+            </Router>
+        </LanguageProvider>
+    );
 }
 
 export default App;

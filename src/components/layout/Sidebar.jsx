@@ -21,8 +21,8 @@ const Sidebar = ({ isOpen, onClose, role }) => {
         { icon: Bell, label: t('notices'), path: '/resident/notices', roles: ['resident'] },
         { icon: Users, label: 'Visitors & Deliveries', path: '/resident/visitors', roles: ['resident'] },
         { icon: Settings, label: 'Settings', path: '/resident/settings', roles: ['resident'] },
-        { icon: Building2, label: t('flats'), path: '/flats', roles: ['admin', 'super_admin'] },
-        { icon: Wrench, label: t('maintenance'), path: '/maintenance', roles: ['admin', 'super_admin'] },
+        // Flats removed from Admin
+        { icon: Wrench, label: 'Administration', path: '/administration', roles: ['admin', 'super_admin'] },
         { icon: MessageSquare, label: t('complaints'), path: '/complaints', roles: ['admin', 'super_admin'] },
         { icon: Bell, label: t('notices'), path: '/notices', roles: ['admin', 'super_admin'] },
         { icon: Users, label: t('visitors'), path: '/visitors', roles: ['admin', 'super_admin'] },

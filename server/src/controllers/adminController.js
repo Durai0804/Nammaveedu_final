@@ -277,6 +277,8 @@ async function deleteFlat(req, res, next) {
       const userIds = residents.map(r => r.userId);
       if (userIds.length) {
         await tx.preApproval.deleteMany({ where: { createdById: { in: userIds } } });
+        // Delete notifications that reference these users to satisfy FK constraints
+        await tx.notification.deleteMany({ where: { userId: { in: userIds } } });
         await tx.resident.deleteMany({ where: { flatId: id } });
         await tx.user.deleteMany({ where: { id: { in: userIds } } });
       }
@@ -317,7 +319,7 @@ async function listFlatOpenComplaints(req, res, next) {
 
 async function listMaintenance(req, res, next) {
   try {
-    const { status, q, month } = req.query;
+    const { status, q, month, hasComplaints } = req.query;
 
     const items = await prisma.maintenance.findMany({
       where: {
@@ -358,7 +360,7 @@ async function listMaintenance(req, res, next) {
       if (!phoneByFlat.has(r.flatId)) phoneByFlat.set(r.flatId, r.phone || '');
     }
 
-    const payload = items.map(m => ({
+    let payload = items.map(m => ({
       id: m.id,
       flatId: m.flatId,
       flatNumber: m.flat?.flatNumber,
@@ -370,6 +372,7 @@ async function listMaintenance(req, res, next) {
       paidAt: m.paidAt,
       createdAt: m.createdAt,
     }));
+
 
     res.json({ success: true, data: payload });
   } catch (err) { next(err); }
